@@ -1,0 +1,25 @@
+<%- include('header') %>
+
+    <div class="box" id="heading">
+        <h1><%= listTitle%> </h1>
+    </div>
+    
+    <div class="box">
+        <% for( let index = 0; index < nextTask.length; index++ ) { %>
+            <div class="item">
+                <input type="checkbox">
+                <p> <%= nextTask[index] %> </p>
+            </div>
+        <% } %>
+
+        <!-- no matter in which route/page the below button is pressed the post request will always be made at the root route
+        so in order to check, in which route/page the button is pressed the "value" attribute of the button is made dynamic whose value depends 
+        on the page the button is pressed on, using the value of the "value" attri we can write the logic in the post method of root
+        route itself-->
+        <form class="item" action="/" method="post"> 
+            <input type="text" name="task" placeholder="New Task" autocomplete="off">
+            <button type="submit" name="list" value="<%= listTitle%>">+</button>
+        </form>
+    </div>
+
+<%- include('footer') %>
