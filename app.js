@@ -1,44 +1,122 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const date = require(__dirname+"/date.js");
+const mongoose = require("mongoose");
+const _ = require("lodash");
 
 const app = express();
-
-let items = ["Buy food","Cook Food","Eat Food"];
-let workItems = []
+mongoose.connect("mongodb://127.0.0.1:27017/todolistDB");
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-app.get("/", function (req, res){
-    // var currentDay = today.getDay();
-    // var allDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    let day = date.getDate();
-    res.render("list", {listTitle:day, nextTask: items});
+const itemsSchema = mongoose.Schema({
+    task: String
+});
 
+
+const Item = mongoose.model("Item", itemsSchema);
+
+const Item1 = new Item({
+    task: "Welcome to your todolist!"
+});
+
+const Item2 = new Item({
+    task: "Hit the + button to add a new item."
+});
+
+const Item3 = new Item({
+    task: "<--- Hit this to delete an item."
+});
+
+const defaultItems = [Item1, Item2, Item3];
+
+const listSchema = {
+    name: String,
+    items: [itemsSchema]
+};
+const List = mongoose.model("List", listSchema)
+
+app.get("/", function (req, res){
+    var day = date.getDate();
+    Item.find().then(function (items) {
+        if(items.length === 0){
+            Item.insertMany(defaultItems).then(function () {
+                console.log("Successfully saved defult items to DB");
+              }).catch(function (err) {
+                console.log(err);
+              });
+        }
+        res.render("list", {listTitle:day, nextTask: items});
+    }).catch(function (err) {
+        console.log(err);
+    });
 });
 
 app.post("/", function(req, res){
-    let task = req.body.task;
-    if(req.body.list === "Work List") //it means the button is pressed in work page so task is added to workItems list and it is redirected to the same page i.e /work
-    {    
-        if(task !== ""){
-            workItems.push(task);
-        }
-        res.redirect("/work");
+    let taskName = req.body.task;
+    let listName = req.body.list;
+    console.log(listName);
+    const newItem = new Item({
+        task: taskName
+    });
+    if(listName === date.getDate()){
+        newItem.save();
+        res.redirect("/")
     }
     else{
-          
-        if(task !== ""){
-            items.push(task);
-        }
+        List.findOne({name: listName}).then(function (foundList){
+            foundList.items.push(newItem);
+            foundList.save();
+        });
+        // console.log("/"+req.body.listName);
+        res.redirect("/"+listName);
+    }
+
+});
+
+app.post("/delete", function(req, res) {
+    let del_record_id = req.body.checkbox;
+    let listName = req.body.listName;
+
+    if(listName === date.getDate()){
+        Item.deleteOne({_id: del_record_id}).then(function (){
+            console.log("deleted");
+        }).catch(function (err){
+            console.log(err);
+        });
         res.redirect("/");
+    }
+    else
+    {
+        List.findOneAndUpdate({name: listName}, {$pull: {items: {_id: del_record_id}}}).then(function (){
+            res.redirect("/"+listName)
+        }).catch(function (err){
+            console.log(err);
+        });
     }
 });
 
-app.get("/work", function (req, res){
-    res.render("list", {listTitle:"Work List", nextTask: workItems});
+app.get("/:newRoute", function (req, res){
+    const customListName = _.capitalize(req.params.newRoute);
+    List.findOne({name:customListName}).then(function (foundList){
+        if(!foundList){
+            const list = new List({
+                name: customListName,
+                items:defaultItems
+            });
+            list.save(); 
+            res.redirect("/"+customListName);
+        }
+        else{
+        res.render("list",  {listTitle:foundList.name, nextTask:foundList.items})
+        }
+    }).catch(function (err){
+        console.log(err);
+    })
+
+  
 });
 
 

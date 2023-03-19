@@ -6,10 +6,13 @@
     
     <div class="box">
         <% for( let index = 0; index < nextTask.length; index++ ) { %>
-            <div class="item">
-                <input type="checkbox">
-                <p> <%= nextTask[index] %> </p>
-            </div>
+            <form action="/delete" method="post">
+                <div class="item">
+                    <input name="checkbox" value="<%= nextTask[index]._id %>" type="checkbox" onchange="this.form.submit()">
+                    <p> <%= nextTask[index].task %> </p>
+                </div>
+                <input type="hidden" name="listName" value="<%= listTitle %>">
+            </form>
         <% } %>
 
         <!-- no matter in which route/page the below button is pressed the post request will always be made at the root route
@@ -18,7 +21,7 @@
         route itself-->
         <form class="item" action="/" method="post"> 
             <input type="text" name="task" placeholder="New Task" autocomplete="off">
-            <button type="submit" name="list" value="<%= listTitle%>">+</button>
+            <button type="submit" name="list" value="<%= listTitle %>">+</button>
         </form>
     </div>
 
