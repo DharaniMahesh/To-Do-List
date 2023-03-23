@@ -3,9 +3,11 @@ const bodyParser = require("body-parser");
 const date = require(__dirname+"/date.js");
 const mongoose = require("mongoose");
 const _ = require("lodash");
+const dotenv = require('dotenv')
+dotenv.config({path:__dirname+'/.env'});
 
 const app = express();
-mongoose.connect("mongodb+srv://admin-mahesh:Mahesh123@cluster0.6ijrrec.mongodb.net/todolistDB");
+mongoose.connect(process.env.atlas);
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
